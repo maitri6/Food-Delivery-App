@@ -7,42 +7,42 @@ const dishes = require('../restaurant/dishes');
 
 
 
-exports.addRestaurant = async(req,res,next) =>{
-    try{
+exports.addRestaurant = async (req, res, next) => {
+    try {
         const saveRestaurant = await RestaurantModel.create(req.body);
-        return sendResponse(res,true,200,"Restaurant added successfully",saveRestaurant);
+        return sendResponse(res, true, 200, "Restaurant added successfully", saveRestaurant);
 
-    }catch(err){
+    } catch (err) {
         console.log(err);
     }
 };
 
-exports.getRestaurant = async(req,res,next) =>{
-    try{
+exports.getRestaurant = async (req, res, next) => {
+    try {
         const getRestaurant = await RestaurantModel.aggregate([{
-            $match:{location:req.query.location}
+            $match: { location: req.query.location }
         }]);
-        return sendResponse(res,true,200,"Restaurant fetched successfully",getRestaurant);
-    }catch(err){
+        return sendResponse(res, true, 200, "Restaurant fetched successfully", getRestaurant);
+    } catch (err) {
         console.log(err);
     }
 };
 
 
-const CATEGORY_LIST =[
-    {name: "pizza"},
-    {name: "burger"},
-    {name: "paneer"},
-    {name: "biryani"},
-    {name: "noodles"},
-    {name: "fried rice"},
-    {name: "rolls"},
-    {name: "sandwich"},
-    {name: "fries"},
-    {name: "cake"},
-    {name: "milkshake"},
-    {name: "paratha"},
-    {name: "pasta"},
+const CATEGORY_LIST = [
+    { name: "pizza" },
+    { name: "burger" },
+    { name: "paneer" },
+    { name: "biryani" },
+    { name: "noodles" },
+    { name: "fried rice" },
+    { name: "rolls" },
+    { name: "sandwich" },
+    { name: "fries" },
+    { name: "cake" },
+    { name: "milkshake" },
+    { name: "paratha" },
+    { name: "pasta" },
 
 ]
 
@@ -62,33 +62,33 @@ async function seedData() {
 };
 //seedData();
 
-exports.getAllCategory = async(req,res,next) =>{
-    try{
+exports.getAllCategory = async (req, res, next) => {
+    try {
         const getCategory = await CategoryModel.find({});
-        return sendResponse(res,true,200,"Category fectched successfully",getCategory);
-    }catch(err){
+        return sendResponse(res, true, 200, "Category fectched successfully", getCategory);
+    } catch (err) {
         console.log(err)
     }
 };
 
-exports.getAllDish = async(req,res,next) =>{
-    try{
-        const getDish = await DishModel.find({restuarantId:req.query.restuarantId})
-        .lean()
-        .populate({
-            path: "restaurantId",
-            select: ["name","description","location"]
-        })
-        .select([
-            "name",
-            "description",
-            "price"
-        ]);
+exports.getAllDish = async (req, res, next) => {
+    try {
+        const getDish = await DishModel.find({ restuarantId: req.query.restuarantId })
+            .lean()
+            .populate({
+                path: "restaurantId",
+                select: ["name", "description", "location"]
+            })
+            .select([
+                "name",
+                "description",
+                "price"
+            ]);
         console.log(getDish)
 
-        return sendResponse(res,true,200,"Dishes fetched successfully",getDish);
+        return sendResponse(res, true, 200, "Dishes fetched successfully", getDish);
 
-    }catch(err){
+    } catch (err) {
         console.log(err)
     }
 };
@@ -112,7 +112,7 @@ exports.addDish = async (req, res, next) => {
 
         const saveDish = await DishModel.create(req.body);
         console.log(saveDish._id)
-        await RestaurantModel.create({categoryId:saveDish._id})
+        await RestaurantModel.create({ categoryId: saveDish._id })
         return sendResponse(res, true, 200, "Dish added successfully", saveDish);
 
     } catch (err) {
@@ -120,69 +120,69 @@ exports.addDish = async (req, res, next) => {
     }
 };
 
-exports.updateDishDetails = async(req,res,next) =>{
-    try{
-        const getDish = await DishModel.findOne({_id:req.query._id});
+exports.updateDishDetails = async (req, res, next) => {
+    try {
+        const getDish = await DishModel.findOne({ _id: req.query._id });
 
-        await DishModel.findOneAndUpdate({_id:getDish._id},{$set:{...req.body}},{new:true});
-        return sendResponse(res,true,200,"Dish updated successfully");
-    }catch(err){
+        await DishModel.findOneAndUpdate({ _id: getDish._id }, { $set: { ...req.body } }, { new: true });
+        return sendResponse(res, true, 200, "Dish updated successfully");
+    } catch (err) {
         console.log(err)
     }
 };
 
 exports.deleteDishFromRestaurant = async (req, res, next) => {
     try {
-    //     const getRestaurant = await RestaurantModel.aggregate([
-    //         // {
-    //         //     $match:{_id:req.body.restaurantId},
-    //         // },
-    //         {
-    //             $lookup:{
-    //                 from: "DishModel",
-    //                 localField: "_id",
-    //                 foreignField: "restaurantId",
-    //                 as: "dishes"
-    //             }
-    //         },
-    //         {
-    //             $set:{
-    //                 dishes:{
-    //                     $filter:{
-    //                         input: '$dishes',
-    //                         as: 'dish',
-    //                         cond:{
-    //                             $ne:['$$dish._id',req.body._id]
-    //                         }
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //         // {
-    //         //     $out: 'DishModel'
-    //         // }
-    //     ]);
-    //     //console.log(getRestaurant)
-    //    // console.log(dish)
-    //    if (getRestaurant.length > 0) {
-    //     const restaurant = getRestaurant[0]; // Assuming only one restaurant is matched
-    //     const dishes = restaurant.dishes;
-      
-    //     dishes.forEach((dish) => {
-    //       console.log(dish);
-    //     });
-    //   } else {
-    //     console.log("Restaurant not found or no dishes available.");
-    //   }
-    //     return sendResponse(res,true,200,"Dish deleted successfully");
+        //     const getRestaurant = await RestaurantModel.aggregate([
+        //         // {
+        //         //     $match:{_id:req.body.restaurantId},
+        //         // },
+        //         {
+        //             $lookup:{
+        //                 from: "DishModel",
+        //                 localField: "_id",
+        //                 foreignField: "restaurantId",
+        //                 as: "dishes"
+        //             }
+        //         },
+        //         {
+        //             $set:{
+        //                 dishes:{
+        //                     $filter:{
+        //                         input: '$dishes',
+        //                         as: 'dish',
+        //                         cond:{
+        //                             $ne:['$$dish._id',req.body._id]
+        //                         }
+        //                     }
+        //                 }
+        //             }
+        //         }
+        //         // {
+        //         //     $out: 'DishModel'
+        //         // }
+        //     ]);
+        //     //console.log(getRestaurant)
+        //    // console.log(dish)
+        //    if (getRestaurant.length > 0) {
+        //     const restaurant = getRestaurant[0]; // Assuming only one restaurant is matched
+        //     const dishes = restaurant.dishes;
 
-    const getDetail = await DishModel.find({restaurantId:req.body.restaurantId,_id:req.body._id});
-    // console.log(getDetail);
-    // console.log(getDetail[0]._id)
+        //     dishes.forEach((dish) => {
+        //       console.log(dish);
+        //     });
+        //   } else {
+        //     console.log("Restaurant not found or no dishes available.");
+        //   }
+        //     return sendResponse(res,true,200,"Dish deleted successfully");
 
-    await DishModel.deleteOne(getDetail[0]._id);
-    return sendResponse(res,true,200,"Dish deleted successfully")
-       
+        const getDetail = await DishModel.find({ restaurantId: req.body.restaurantId, _id: req.body._id });
+        // console.log(getDetail);
+        // console.log(getDetail[0]._id)
+
+        await DishModel.deleteOne(getDetail[0]._id);
+        return sendResponse(res, true, 200, "Dish deleted successfully")
+
 
     } catch (err) {
         console.log(err)
@@ -190,18 +190,18 @@ exports.deleteDishFromRestaurant = async (req, res, next) => {
 };
 
 
-exports.getAllRestaurantFromCategory = async(req,res,next) =>{
-    try{
-        const getRestaurantFromCategory = await DishModel.find({categoryId:req.query.categoryId})
-        .lean()
-        .populate({
-            path:"restaurantId",
-            select :["name","description"]
-        });
+exports.getAllRestaurantFromCategory = async (req, res, next) => {
+    try {
+        const getRestaurantFromCategory = await DishModel.find({ categoryId: req.query.categoryId })
+            .lean()
+            .populate({
+                path: "restaurantId",
+                select: ["name", "description"]
+            });
         console.log(getRestaurantFromCategory)
-        return sendResponse(res,true,200,"Restaurant fetched successfully",getRestaurantFromCategory);
+        return sendResponse(res, true, 200, "Restaurant fetched successfully", getRestaurantFromCategory);
 
-    }catch(err){
+    } catch (err) {
         console.log(err)
     }
 };
