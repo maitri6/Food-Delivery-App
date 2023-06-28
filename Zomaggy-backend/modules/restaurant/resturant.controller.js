@@ -214,3 +214,31 @@ exports.getCart = async (req, res, next) => {
     }
 
 };
+
+
+exports.getOrders = async(req,res,next) =>{
+    try{
+        const getDetails = await CartModel.find({userId:req.user.userId})
+        .lean()
+        .populate({
+            path:'userId',
+            select:["name","location"]
+        })
+        .populate({
+            path:'restaurantId',
+            select:["name","location"]
+        })
+        .populate({
+            path:'dishes.dishId',
+            select:["name","price"]
+        })
+        .select([
+            "dishes.quantity","dishes.totalPrice"
+        ])
+        console.log(getDetails)
+
+        return sendResponse(res,true,200,"Orders fectched successfully",getDetails)
+    }catch(err){
+        console.log(err)
+    }
+};

@@ -14,6 +14,7 @@ router.post('/deleteDishFromRestaurant',restaurantController.deleteDishFromResta
 router.get('/getAllRestaurantFromCategory',restaurantController.getAllRestaurantFromCategory);
 router.post('/addToCart',authenticated,restaurantController.addToCart);
 router.get('/getCart',authenticated,restaurantController.getCart);
+router.get('/getOrders',authenticated,restaurantController.getOrders);
 
 module.exports = router;
 
