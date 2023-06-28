@@ -1,7 +1,8 @@
 const RestaurantModel = require('../restaurant/restaurant');
 const CategoryModel = require('../restaurant/category');
 const DishModel = require('../restaurant/dishes');
-//const CATEGORY_LIST = require('../../config/constant');
+const CartModel = require('../restaurant/cart');
+const CATEGORY_LIST = require('../../config/constant');
 const sendResponse = require('../../helpers/requestHandler.helper');
 const dishes = require('../restaurant/dishes');
 
@@ -27,24 +28,6 @@ exports.getRestaurant = async (req, res, next) => {
         console.log(err);
     }
 };
-
-
-const CATEGORY_LIST = [
-    { name: "pizza" },
-    { name: "burger" },
-    { name: "paneer" },
-    { name: "biryani" },
-    { name: "noodles" },
-    { name: "fried rice" },
-    { name: "rolls" },
-    { name: "sandwich" },
-    { name: "fries" },
-    { name: "cake" },
-    { name: "milkshake" },
-    { name: "paratha" },
-    { name: "pasta" },
-
-]
 
 
 
@@ -97,22 +80,22 @@ exports.addDish = async (req, res, next) => {
     try {
         const checkDish = await DishModel.findOne({ name: req.body.name });
 
-        if (checkDish) {
+        if (checkDish && checkDish.restaurantId == req.body.restaurantId) {
             return sendResponse(res, true, 400, "Dish is alraedy present in the menu");
         }
 
-        const checkRestaurant = await RestaurantModel.findOne({ _id: req.body.restaurantId });
-        if (!checkRestaurant) {
-            return sendResponse(res, true, 400, "Restaurant not found");
-        }
+        // const checkRestaurant = await RestaurantModel.findOne({ _id: req.body.restaurantId });
+        // if (!checkRestaurant) {
+        //     return sendResponse(res, true, 400, "Restaurant not found");
+        // }
         const checkCategory = await CategoryModel.findOne({ _id: req.body.categoryId });
         if (!checkCategory) {
             return sendResponse(res, true, 400, "Category not found");
         }
 
         const saveDish = await DishModel.create(req.body);
-        console.log(saveDish._id)
-        await RestaurantModel.create({ categoryId: saveDish._id })
+        //console.log(saveDish._id)
+        //await RestaurantModel.create({ categoryId: saveDish._id })
         return sendResponse(res, true, 200, "Dish added successfully", saveDish);
 
     } catch (err) {
@@ -133,53 +116,8 @@ exports.updateDishDetails = async (req, res, next) => {
 
 exports.deleteDishFromRestaurant = async (req, res, next) => {
     try {
-        //     const getRestaurant = await RestaurantModel.aggregate([
-        //         // {
-        //         //     $match:{_id:req.body.restaurantId},
-        //         // },
-        //         {
-        //             $lookup:{
-        //                 from: "DishModel",
-        //                 localField: "_id",
-        //                 foreignField: "restaurantId",
-        //                 as: "dishes"
-        //             }
-        //         },
-        //         {
-        //             $set:{
-        //                 dishes:{
-        //                     $filter:{
-        //                         input: '$dishes',
-        //                         as: 'dish',
-        //                         cond:{
-        //                             $ne:['$$dish._id',req.body._id]
-        //                         }
-        //                     }
-        //                 }
-        //             }
-        //         }
-        //         // {
-        //         //     $out: 'DishModel'
-        //         // }
-        //     ]);
-        //     //console.log(getRestaurant)
-        //    // console.log(dish)
-        //    if (getRestaurant.length > 0) {
-        //     const restaurant = getRestaurant[0]; // Assuming only one restaurant is matched
-        //     const dishes = restaurant.dishes;
-
-        //     dishes.forEach((dish) => {
-        //       console.log(dish);
-        //     });
-        //   } else {
-        //     console.log("Restaurant not found or no dishes available.");
-        //   }
-        //     return sendResponse(res,true,200,"Dish deleted successfully");
 
         const getDetail = await DishModel.find({ restaurantId: req.body.restaurantId, _id: req.body._id });
-        // console.log(getDetail);
-        // console.log(getDetail[0]._id)
-
         await DishModel.deleteOne(getDetail[0]._id);
         return sendResponse(res, true, 200, "Dish deleted successfully")
 
@@ -198,7 +136,6 @@ exports.getAllRestaurantFromCategory = async (req, res, next) => {
                 path: "restaurantId",
                 select: ["name", "description"]
             });
-        console.log(getRestaurantFromCategory)
         return sendResponse(res, true, 200, "Restaurant fetched successfully", getRestaurantFromCategory);
 
     } catch (err) {
@@ -206,3 +143,74 @@ exports.getAllRestaurantFromCategory = async (req, res, next) => {
     }
 };
 
+
+exports.addToCart = async (req, res, next) => {
+    try {
+        const addCart = await CartModel.findOne({ userId: req.user.userId });
+
+        // if cart is not present or restaurant selected by user is not same as restaurant present in cart create new cart
+
+        if (!addCart || addCart.restaurantId.toHexString() !== req.body.restaurantId) {
+            const getPrice = await DishModel.find({ _id: req.body.dishId });
+            const saveCart = await CartModel.create({ ...req.body, userId: req.user.userId });
+            saveCart.dishes.push({ dishId: req.body.dishId, quantity: req.body.quantity, totalPrice: getPrice[0].price });
+            await saveCart.save();
+            return sendResponse(res, true, 200, "Dish added to cart successfully", saveCart);
+
+        }
+
+        // if cart is present and if restaurant and dish selected by user matches with the cart just add the quantity
+
+        if (addCart.restaurantId.toHexString() == req.body.restaurantId) {
+
+            const dish = addCart.dishes.find((d) => d.dishId == req.body.dishId)
+            if (dish) {
+                dish.quantity += 1
+                dish.totalPrice = dish.quantity * dish.totalPrice
+                await addCart.save();
+                return sendResponse(res, true, 200, "Dish quantity added to existing cart successfully", addCart);
+
+            }
+
+
+        }
+
+        // if the restaurant selected matches the restaurant in existing cart add the dish in the cart
+        const getPrice = await DishModel.find({ _id: req.body.dishId });
+        if (addCart.restaurantId.toHexString() == req.body.restaurantId) {
+            const saveCart = await CartModel.create({ ...req.body, userId: req.user.userId });
+            addCart.dishes.push({ dishId: req.body.dishId, quantity: req.body.quantity, totalPrice: getPrice[0].price });
+            await saveCart.save();
+
+            return sendResponse(res, true, 200, "Dish added to existing cart successfully", saveCart);
+
+
+        }
+
+    } catch (err) {
+        console.log(err);
+    }
+};
+
+exports.getCart = async (req, res, next) => {
+    try {
+        const getCart = await CartModel.find({ userId: req.user.userId })
+            .lean()
+            .populate({
+                path: 'restaurantId',
+                select: ["name", "description"]
+            })
+            .populate({
+                path: 'dishes.dishId',
+                select: ["name", "price"]
+            })
+            .select([
+                "dishes.quantity","dishes.totalPrice"
+            ]);
+
+        return sendResponse(res, true, 200, "Cart fetched successfully", getCart)
+    } catch (err) {
+        console.log(err)
+    }
+
+};
