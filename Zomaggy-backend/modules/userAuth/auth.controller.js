@@ -3,7 +3,7 @@ const bcrypt = require('bcrypt');
 
 const sendResponse = require('../../helpers/requestHandler.helper');
 const sendMail = require('../../helpers/mail.helper');
-const { generateJwt } = require('../../helpers/jwt.helper');
+const { generateJwt,verifyToken } = require('../../helpers/jwt.helper');
 
 
 exports.register = async (req, res, next) => {
@@ -24,9 +24,9 @@ exports.register = async (req, res, next) => {
         //send email
 
         sendMail(saveUser.email, subject, message);
-      
 
-     
+
+
         return sendResponse(res, true, 200, "User registered successfully", saveUser);
 
     }
@@ -38,7 +38,7 @@ exports.register = async (req, res, next) => {
 exports.login = async (req, res, next) => {
     try {
         let message, subject, otp;
-        const getUser = await UserModel.findOne({email: req.body.email});
+        const getUser = await UserModel.findOne({ email: req.body.email });
         if (!getUser)
             return sendResponse(res, true, 400, "User not found");
 
@@ -46,8 +46,6 @@ exports.login = async (req, res, next) => {
 
         let token = await generateJwt({
             userId: getUser._id,
-            email: getUser.email,
-            phoneNumber: getUser.phoneNumber,
             role: getUser.role
         });
 
@@ -63,12 +61,12 @@ exports.login = async (req, res, next) => {
         await UserModel.updateOne({ _id: getUser._id }, { $set: { otp: otp } });
         sendMail(getUser.email, subject, message);
 
-        // cookie 
-    req.session.isAuth = true;
-    req.session.userId = getUser._id;
-    req.session.role = getUser.role;
-    req.session.save();
-    console.log(req.session);
+        // cookie
+
+        req.session.jwt = token;
+        // console.log(req.session.jwt)
+         console.log(req.session)
+        // console.log(token)
         return sendResponse(res, true, 200, "Otp send successfully", {
             getUser,
             token
@@ -79,34 +77,52 @@ exports.login = async (req, res, next) => {
     }
 };
 
-exports.sendOtp = async(req,res) =>{
+exports.currentUser = async(req, res, next) =>{
     try{
-        let subject,message
+        console.log(req.session)
+        if(!req.session?.jwt){
+            return res.send({ currentUser: null})
+        }
+        
+
+        let verify = verifyToken(req.session.jwt);
+        res.send({ currentUser: verify});
+
+    }catch(err){
+        res.send({currentUser: null});
+
+    }
+
+};
+
+exports.sendOtp = async (req, res) => {
+    try {
+        let subject, message
         const getUser = await UserModel.findById(req.body.userId);
-        if(!getUser) return sendResponse(res,true,400,"User not found");
-        if(req.body.type=='resendOtp'){
+        if (!getUser) return sendResponse(res, true, 400, "User not found");
+        if (req.body.type == 'resendOtp') {
             otp = await generateOTP();
             subject = "Here is your 6 digits OTP";
             message = otp;
-            sendMail(getUser.email,subject,message);
-            await UserModel.updateOne({_id:getUser._id},{$set:{otp:otp}});
-            return sendResponse(res,true,200,"OTP send successfully");
+            sendMail(getUser.email, subject, message);
+            await UserModel.updateOne({ _id: getUser._id }, { $set: { otp: otp } });
+            return sendResponse(res, true, 200, "OTP send successfully");
         }
         const checkOtp = await UserModel.findOne({
-            _id:req.body.userId,
-            otp:req.body.otp
+            _id: req.body.userId,
+            otp: req.body.otp
         });
 
-        if(!checkOtp) return sendResponse(res,true,401,"Invalid otp");
-        await UserModel.updateOne({_id:checkOtp._id},{$set:{status:true}});
-        return sendResponse(res,true,200,"User verified successfully");
-    } catch(error){}
+        if (!checkOtp) return sendResponse(res, true, 401, "Invalid otp");
+        await UserModel.updateOne({ _id: checkOtp._id }, { $set: { status: true } });
+        return sendResponse(res, true, 200, "User verified successfully");
+    } catch (error) { }
 };
 
-exports.updateProfile = async(req,res,next)=>{
-    try{
+exports.updateProfile = async (req, res, next) => {
+    try {
         const getUser = await UserModel.findById(req.user.userId);
-        if(!getUser) {
+        if (!getUser) {
             return sendResponse(
                 res,
                 true,
@@ -114,37 +130,37 @@ exports.updateProfile = async(req,res,next)=>{
                 "User not found"
             );
         }
-        await UserModel.updateOne({_id:getUser._id},{$set:{...req.body}});
+        await UserModel.updateOne({ _id: getUser._id }, { $set: { ...req.body } });
         return sendResponse(
             res,
             true,
             200,
             "Profile updated successfully"
         )
-    }catch(err){
+    } catch (err) {
         console.log(err);
     }
 };
 
-exports.logout = async(req,res,next) =>{
-    try{
-        
+exports.logout = async (req, res, next) => {
+    try {
+
         const getUser = await UserModel.aggregate([{
-            
-            $match: {_id:req.session.userId}
+
+            $match: { _id: req.session.userId }
         }]);
-        req.session.destroy((err) =>{
-            if(err){
+        req.session.destroy((err) => {
+            if (err) {
                 cosole.log(err);
-                return sendResponse(res,true,400,"Failed to destroy session");
-            }else{
-                console.log("session destroyed",req.session);
-                return sendResponse(res,true,200,"User logged out successfully");
+                return sendResponse(res, true, 400, "Failed to destroy session");
+            } else {
+                console.log("session destroyed", req.session);
+                return sendResponse(res, true, 200, "User logged out successfully");
             }
 
         });
 
-    }catch(err){
+    } catch (err) {
         console.log(err);
     }
 }

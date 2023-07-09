@@ -4,13 +4,12 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const session = require('express-session');
-const cookieParser = require('cookie-parser');
-const path = require('path');
+
 
 
 const app = express();
 app.use(express.json());
-app.use(cookieParser());
+
 
 
 app.use(session({
@@ -18,10 +17,14 @@ app.use(session({
     resave: true,
     saveUninitialized: true,
     cookie: {
-        maxAge: 600000,
-        
+        //maxAge: 600000,
+        secure: false,
+        signed: true
+
     }
 }));
+
+
 
 const server = http.createServer(app);
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -42,14 +45,14 @@ dbConn.on("error", () => {
     console.log("Mongodb connection error");
 });
 
-dbConn.once("open", function() {
+dbConn.once("open", function () {
     console.log("Mongodb connected successfully!!");
 });
 
-app.get('/', function(req, res) {
+app.get('/', function (req, res) {
     res.send("Food Delivery App Runs!!")
 });
 
-server.listen(2000, function() {
+server.listen(2000, function () {
     console.log("Server is running at 2000");
 })

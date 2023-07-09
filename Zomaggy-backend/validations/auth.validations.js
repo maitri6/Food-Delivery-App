@@ -19,7 +19,7 @@ const registerValidation = async (req,res,next) =>{
             .messages({
               "string.pattern.base": "Invalid phone number.",
             }),
-            //location: Joi.string().required()
+            location: Joi.required()
         }).options({ allowUnknown: true });
 
         const { value, error } = schema.validate(req.body);

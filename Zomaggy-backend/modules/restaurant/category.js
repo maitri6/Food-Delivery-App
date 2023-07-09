@@ -5,9 +5,9 @@ const userSchema = new mongoose.Schema({
         default: "",
         trim: true
     },
-    restaurantId: {
+    userId: {
         type: mongoose.Types.ObjectId,
-        ref: "restaurant",
+        ref: "user",
     },
 
 },

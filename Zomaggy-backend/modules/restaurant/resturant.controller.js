@@ -1,17 +1,38 @@
 const RestaurantModel = require('../restaurant/restaurant');
 const CategoryModel = require('../restaurant/category');
+const category = require('../restaurant/category');
+const UserModel = require('../userAuth/user.model');
 const DishModel = require('../restaurant/dishes');
 const CartModel = require('../restaurant/cart');
 const CATEGORY_LIST = require('../../config/constant');
 const sendResponse = require('../../helpers/requestHandler.helper');
-const dishes = require('../restaurant/dishes');
+const restaurant = require('../restaurant/restaurant');
 
 
 
 exports.addRestaurant = async (req, res, next) => {
     try {
-        const saveRestaurant = await RestaurantModel.create(req.body);
-        return sendResponse(res, true, 200, "Restaurant added successfully", saveRestaurant);
+        const checkName = await RestaurantModel.find({ name: req.body.name });
+        let categorys =[];
+        if (checkName.length == 0) {
+            
+            if(Array.isArray(categorys)){
+                console.log("array")
+            }else{
+                console.log("not array")
+            }
+            const categoryData = restaurant.cuisines.map((x) => {
+                return {name : x};
+            });
+            console.log(categoryData)
+               // return { name: x.cuisines };
+
+            const category = CategoryModel.insertMany(categoryData);
+            const saveRestaurant = await RestaurantModel.create(req.body);
+            return sendResponse(res, true, 200, "Restaurant added successfully", saveRestaurant);
+        }
+        return sendResponse(res, true, 200, "Restaurant is already present")
+
 
     } catch (err) {
         console.log(err);
@@ -20,9 +41,8 @@ exports.addRestaurant = async (req, res, next) => {
 
 exports.getRestaurant = async (req, res, next) => {
     try {
-        const getRestaurant = await RestaurantModel.aggregate([{
-            $match: { location: req.query.location }
-        }]);
+        const getlocation = await UserModel.findById({ _id: req.user.userId });
+        const getRestaurant = await RestaurantModel.find({location: getlocation.location});
         return sendResponse(res, true, 200, "Restaurant fetched successfully", getRestaurant);
     } catch (err) {
         console.log(err);
@@ -56,7 +76,7 @@ exports.getAllCategory = async (req, res, next) => {
 
 exports.getAllDish = async (req, res, next) => {
     try {
-        const getDish = await DishModel.find({ restuarantId: req.query.restuarantId })
+        const getDish = await DishModel.find({ restaurantId: req.query.restaurantId })
             .lean()
             .populate({
                 path: "restaurantId",
@@ -67,7 +87,6 @@ exports.getAllDish = async (req, res, next) => {
                 "description",
                 "price"
             ]);
-        console.log(getDish)
 
         return sendResponse(res, true, 200, "Dishes fetched successfully", getDish);
 
@@ -117,7 +136,7 @@ exports.updateDishDetails = async (req, res, next) => {
 exports.deleteDishFromRestaurant = async (req, res, next) => {
     try {
 
-        const getDetail = await DishModel.find({ restaurantId: req.body.restaurantId, _id: req.body._id });
+        const getDetail = await DishModel.find({ restaurantId: req.query.restaurantId });
         await DishModel.deleteOne(getDetail[0]._id);
         return sendResponse(res, true, 200, "Dish deleted successfully")
 
@@ -205,7 +224,7 @@ exports.getCart = async (req, res, next) => {
                 select: ["name", "price"]
             })
             .select([
-                "dishes.quantity","dishes.totalPrice"
+                "dishes.quantity", "dishes.totalPrice"
             ]);
 
         return sendResponse(res, true, 200, "Cart fetched successfully", getCart)
@@ -216,29 +235,29 @@ exports.getCart = async (req, res, next) => {
 };
 
 
-exports.getOrders = async(req,res,next) =>{
-    try{
-        const getDetails = await CartModel.find({userId:req.user.userId})
-        .lean()
-        .populate({
-            path:'userId',
-            select:["name","location"]
-        })
-        .populate({
-            path:'restaurantId',
-            select:["name","location"]
-        })
-        .populate({
-            path:'dishes.dishId',
-            select:["name","price"]
-        })
-        .select([
-            "dishes.quantity","dishes.totalPrice"
-        ])
+exports.getOrders = async (req, res, next) => {
+    try {
+        const getDetails = await CartModel.find({ userId: req.user.userId })
+            .lean()
+            .populate({
+                path: 'userId',
+                select: ["name", "location"]
+            })
+            .populate({
+                path: 'restaurantId',
+                select: ["name", "location"]
+            })
+            .populate({
+                path: 'dishes.dishId',
+                select: ["name", "price"]
+            })
+            .select([
+                "dishes.quantity", "dishes.totalPrice"
+            ])
         console.log(getDetails)
 
-        return sendResponse(res,true,200,"Orders fectched successfully",getDetails)
-    }catch(err){
+        return sendResponse(res, true, 200, "Orders fectched successfully", getDetails)
+    } catch (err) {
         console.log(err)
     }
 };
