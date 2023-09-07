@@ -3,26 +3,37 @@ const http = require('http');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const bodyParser = require('body-parser');
-const session = require('express-session');
+const cookieSession = require('cookie-session');
+const cookieParser = require('cookie-parser');
 
 
 
 const app = express();
 app.use(express.json());
 
+app.use(cookieParser());
 
 
-app.use(session({
-    secret: 'mySecretKey', // Replace with your own secret key
-    resave: true,
-    saveUninitialized: true,
-    cookie: {
-        //maxAge: 600000,
-        secure: false,
-        signed: true
+// app.use(
+//     cookieSession({
+//         secure: true,
+//         name: "access_token",
+//         secret: 'mySecretKey'
+//     })
+// );
 
-    }
-}));
+
+
+// app.use(session({
+//     secret: 'mySecretKey', // Replace with your own secret key
+//     resave: true,
+//     saveUninitialized: true,
+//     cookie("access_token",{
+//         secure: false,
+//         signed: true,
+
+//     })
+// }));
 
 
 

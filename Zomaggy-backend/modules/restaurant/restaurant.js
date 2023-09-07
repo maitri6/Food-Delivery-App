@@ -2,26 +2,18 @@ const mongoose = require('mongoose');
 const userSchema = new mongoose.Schema({
     name:{
         type:'String',
-        default: "",
         trim: true
     },
     description:{
         type:'String',
-        default: "",
         trim: true
-    },
-    cuisines:{
-        type:[String],
-        default: ["Indian"]
     },
     openTime:{
         type:'String',
-        default: "",
         trim: true
     },
     closeTime:{
         type:'String',
-        default: "",
         trim: true
     },
     location: {
@@ -47,14 +39,6 @@ const userSchema = new mongoose.Schema({
             type: Number
         },
     },
-    userId: {
-        type: mongoose.Types.ObjectId,
-        ref: "user",
-    },
-    // categoryId: {
-    //     type: mongoose.Types.ObjectId,
-    //     ref: "category",
-    // },
 },
 {
     timestamps: true,

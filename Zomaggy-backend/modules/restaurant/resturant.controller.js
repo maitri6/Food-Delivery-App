@@ -1,38 +1,24 @@
 const RestaurantModel = require('../restaurant/restaurant');
 const CategoryModel = require('../restaurant/category');
-const category = require('../restaurant/category');
 const UserModel = require('../userAuth/user.model');
 const DishModel = require('../restaurant/dishes');
 const CartModel = require('../restaurant/cart');
 const CATEGORY_LIST = require('../../config/constant');
+const mongoosePaginate = require('mongoose-paginate');
 const sendResponse = require('../../helpers/requestHandler.helper');
-const restaurant = require('../restaurant/restaurant');
+
 
 
 
 exports.addRestaurant = async (req, res, next) => {
     try {
         const checkName = await RestaurantModel.find({ name: req.body.name });
-        let categorys =[];
-        if (checkName.length == 0) {
-            
-            if(Array.isArray(categorys)){
-                console.log("array")
-            }else{
-                console.log("not array")
-            }
-            const categoryData = restaurant.cuisines.map((x) => {
-                return {name : x};
-            });
-            console.log(categoryData)
-               // return { name: x.cuisines };
+        if (checkName.length > 0) {
+            return sendResponse(res, true, 200, "Restaurant name is already taken")
 
-            const category = CategoryModel.insertMany(categoryData);
-            const saveRestaurant = await RestaurantModel.create(req.body);
-            return sendResponse(res, true, 200, "Restaurant added successfully", saveRestaurant);
         }
-        return sendResponse(res, true, 200, "Restaurant is already present")
-
+        const saveRestaurant = await RestaurantModel.create(req.body);
+        return sendResponse(res, true, 200, "Restaurant added successfully", saveRestaurant);
 
     } catch (err) {
         console.log(err);
@@ -49,20 +35,33 @@ exports.getRestaurant = async (req, res, next) => {
     }
 };
 
+// seed function to save category in database
 
-
-async function seedData() {
-    try {
-        await CategoryModel.deleteMany();
-
-        const category = await CategoryModel.create(CATEGORY_LIST);
-
-        console.log("added ")
-
-    } catch (err) {
-        console.log(err);
+exports.seederSaveCategory = async (req, res) =>{
+    try{
+        const category = await CategoryModel.countDocuments();
+        if(category == 0){
+            await CategoryModel.create(category_List);
+        }
+    }catch(error){
+        return sendResponse(res,true,500,"Internal server error",error);
     }
 };
+
+
+
+// async function seedData() {
+//     try {
+//         await CategoryModel.deleteMany();
+
+//         const category = await CategoryModel.create(CATEGORY_LIST);
+
+//         console.log("added ")
+
+//     } catch (err) {
+//         console.log(err);
+//     }
+// };
 //seedData();
 
 exports.getAllCategory = async (req, res, next) => {
@@ -112,10 +111,10 @@ exports.addDish = async (req, res, next) => {
             return sendResponse(res, true, 400, "Category not found");
         }
 
-        const saveDish = await DishModel.create(req.body);
+        await DishModel.create(req.body);
         //console.log(saveDish._id)
         //await RestaurantModel.create({ categoryId: saveDish._id })
-        return sendResponse(res, true, 200, "Dish added successfully", saveDish);
+        return sendResponse(res, true, 200, "Dish added successfully");
 
     } catch (err) {
         console.log(err)

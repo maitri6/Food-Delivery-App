@@ -3,24 +3,16 @@ const userSchema = new mongoose.Schema(
     {
         name:{
             type:'String',
-            default: "",
             trim: true
         },
         email:{
             type:'String',
-            default: "",
             trim: true
         },
         phoneNumber:{
             type:'String',
-            default: "",
             trim: true
         },
-        // location:{
-        //     type:'String',
-        //     default: "",
-        //     trim: true
-        // },
         role:{
             type: String,
             default: "customer"

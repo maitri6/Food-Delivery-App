@@ -1,5 +1,7 @@
 const jwt = require("jsonwebtoken");
+const cookies = require("cookie-parser");
 const jwtConfig = require("../config/jwt.config");
+const sendResponse = require("../helpers/requestHandler.helper");
 
 const generateJwt = async (payload) => {
   return jwt.sign(payload, jwtConfig.JWT_SECRET, {
@@ -14,6 +16,14 @@ const verifyToken = async (token, refreshToken = false) => {
 
   return jwt.verify(token, jwtConfig.JWT_SECRET);
 };
+
+// const authorization = (req, res, next) =>{
+//   const token = req.session.jwt;
+//   if(!token){
+//     return res.sendStatus(403);
+//   }
+  
+// }
 
 module.exports = {
   generateJwt,

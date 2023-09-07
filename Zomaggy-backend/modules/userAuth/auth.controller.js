@@ -3,7 +3,7 @@ const bcrypt = require('bcrypt');
 
 const sendResponse = require('../../helpers/requestHandler.helper');
 const sendMail = require('../../helpers/mail.helper');
-const { generateJwt,verifyToken } = require('../../helpers/jwt.helper');
+const { generateJwt, verifyToken } = require('../../helpers/jwt.helper');
 
 
 exports.register = async (req, res, next) => {
@@ -61,11 +61,19 @@ exports.login = async (req, res, next) => {
         await UserModel.updateOne({ _id: getUser._id }, { $set: { otp: otp } });
         sendMail(getUser.email, subject, message);
 
+        res.cookie('jwt', token, { httpOnly: true, maxAge: 3600000 });
+
         // cookie
 
-        req.session.jwt = token;
-        // console.log(req.session.jwt)
-         console.log(req.session)
+        // token = req.cookies;
+        //console.log(token)
+
+
+        //req.session.jwt = token;
+        // // console.log(req.session.jwt)
+        //console.log(req.session)
+         console.log(req.cookies.jwt)
+       // console.log(req.cookies)
         // console.log(token)
         return sendResponse(res, true, 200, "Otp send successfully", {
             getUser,
@@ -77,19 +85,31 @@ exports.login = async (req, res, next) => {
     }
 };
 
-exports.currentUser = async(req, res, next) =>{
-    try{
-        console.log(req.session)
-        if(!req.session?.jwt){
-            return res.send({ currentUser: null})
+exports.currentUser = async (req, res, next) => {
+    try {
+        //console.log(req.session)
+        if (!req.cookies.jwt) {
+            console.log("not")
+            return res.send({ currentUser: null })
+     
         }
-        
 
-        let verify = verifyToken(req.session.jwt);
-        res.send({ currentUser: verify});
+        try {
+            let verify = await verifyToken(req.cookies.jwt);
+            console.log("there")
+            res.send({ currentUser: verify });
+         
 
-    }catch(err){
-        res.send({currentUser: null});
+        } catch (err) {
+            console.log("null")
+            res.send({ currentUser: null });
+        }
+
+
+
+
+    } catch (err) {
+        res.send({ currentUser: null });
 
     }
 

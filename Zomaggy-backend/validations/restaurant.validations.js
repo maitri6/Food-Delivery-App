@@ -2,35 +2,62 @@ const Joi = require('joi');
 const sendResponse = require('../helpers/requestHandler.helper');
 
 
-const restaurantValidation = async(req,res,next) =>{
-    try{
+const restaurantValidation = async (req, res, next) => {
+    try {
         const schema = Joi.object({
             name: Joi.string().required(),
             // .message({
             //     "string.empty":"Please add the restaurant name"
             // }),
-            location: Joi.required()
+            location: Joi.required(),
+            address: Joi.required(),
             // .message({
             //     "string.empty":"Please add the location of restaurant"
             // })
+            openTime: Joi.required(),
+            closeTime: Joi.required()
+
         }).options({ allowUnknown: true });
         const { value, error } = schema.validate(req.body);
 
         if (error !== undefined) {
-          return sendResponse(res, false, 422, error.details[0].message);
+            return sendResponse(res, false, 422, error.details[0].message);
         }
-    
+
         // set the variable in the request for validated data
         req.validated = value;
         next();
-    }catch(err){
-       next(err) 
+    } catch (err) {
+        next(err)
     }
 
 };
 
-const addToCartValidation = async(req,res,next) =>{
-    try{
+const addDishValidation = async (req, res, next) => {
+    try {
+        const schema = Joi.object({
+            restaurantId: Joi.required(),
+            categoryId: Joi.required(),
+            name: Joi.required(),
+            description: Joi.required(),
+            price: Joi.required(),
+        }).options({ allowUnknown: true });
+        const { value, error } = schema.validate(req.body);
+
+        if (error !== undefined) {
+            return sendResponse(res, false, 422, error.details[0].message);
+        }
+
+        // set the variable in the request for validated data
+        req.validated = value;
+        next();
+    } catch (err) {
+        next(err);
+    }
+};
+
+const addToCartValidation = async (req, res, next) => {
+    try {
         const schema = Joi.object({
             restaurantId: Joi.required(),
             dishId: Joi.required(),
@@ -39,13 +66,13 @@ const addToCartValidation = async(req,res,next) =>{
         const { value, error } = schema.validate(req.body);
 
         if (error !== undefined) {
-          return sendResponse(res, false, 422, error.details[0].message);
+            return sendResponse(res, false, 422, error.details[0].message);
         }
-    
+
         // set the variable in the request for validated data
         req.validated = value;
         next();
-    }catch(err){
+    } catch (err) {
         next(err)
     }
 };
@@ -55,5 +82,6 @@ const addToCartValidation = async(req,res,next) =>{
 
 module.exports = {
     restaurantValidation,
-    addToCartValidation
+    addToCartValidation,
+    addDishValidation
 };

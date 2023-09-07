@@ -2,16 +2,13 @@ const mongoose = require('mongoose');
 const userSchema = new mongoose.Schema({
     name:{
         type:'String',
-        default: "",
         trim: true
     },
     description:{
         type:'String',
-        default: "",
     },
     price:{
         type: Number,
-        default: "",
         trim: true,
     },
     restaurantId: {
